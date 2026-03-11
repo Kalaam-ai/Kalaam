@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Kalaam.ai — Speech Evolved</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --void:#020617;--signal:#2563EB;--freq:#22D3EE;
+  --glass-bg:rgba(255,255,255,0.04);--glass-border:rgba(255,255,255,0.08);
+  --t1:rgba(255,255,255,0.9);--t2:rgba(255,255,255,0.5);--t3:rgba(255,255,255,0.35);
+}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--signal) var(--void);}
+body{background:var(--void);color:var(--t1);font-family:'Inter',sans-serif;overflow-x:hidden;}
+::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--void);}::-webkit-scrollbar-thumb{background:var(--signal);border-radius:3px;}
+
+.mono{font-family:'JetBrains Mono',monospace;}
+.urdu{font-family:'Noto Nastaliq Urdu',serif;direction:rtl;}
+.grad{background:linear-gradient(90deg,var(--signal),var(--freq));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+.glass{background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
+.osc{height:1px;background:linear-gradient(90deg,transparent,var(--signal),var(--freq),var(--signal),transparent);opacity:.3;}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(32px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.85);}to{opacity:1;transform:scale(1);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+@keyframes spinAnim{to{transform:rotate(360deg);}}
+@keyframes pulseShadow{
+  0%,100%{box-shadow:0 0 60px rgba(37,99,235,.3),0 0 120px rgba(37,99,235,.1);}
+  50%{box-shadow:0 0 80px rgba(37,99,235,.5),0 0 160px rgba(37,99,235,.2);}
+}
+@keyframes fiberGrow{from{height:0;}to{height:100%;}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(-32px);}to{opacity:1;transform:translateX(0);}}
+@keyframes slideRight{from{opacity:0;transform:translateX(32px);}to{opacity:1;transform:translateX(0);}}
+@keyframes nodeIn{from{opacity:0;transform:scale(0);}to{opacity:1;transform:scale(1);}}
+
+.animate-pulse{animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite;}
+.animate-spin{animation:spinAnim 1s linear infinite;}
+
+/* Reveal on scroll */
+/* Reveal: visible by default. JS adds .js-ready to body to enable animations */
+.reveal{opacity:1;transform:none;transition:opacity .7s ease,transform .7s ease;}
+.js-ready .reveal{opacity:0;transform:translateY(28px);}
+.js-ready .reveal.from-left{transform:translateX(-32px);}
+.js-ready .reveal.from-right{transform:translateX(32px);}
+.js-ready .reveal.visible{opacity:1;transform:none;}
+.reveal.d1{transition-delay:.1s;}.reveal.d2{transition-delay:.2s;}.reveal.d3{transition-delay:.3s;}
+.reveal.d4{transition-delay:.4s;}.reveal.d5{transition-delay:.5s;}.reveal.d6{transition-delay:.6s;}
+
+/* Liquid button */
+.liquid{position:relative;overflow:hidden;z-index:1;transition:color .4s;}
+.liquid::before{content:'';position:absolute;bottom:0;left:0;width:100%;height:0;background:var(--signal);transition:height .5s cubic-bezier(.4,0,.2,1);z-index:-1;border-radius:inherit;}
+.liquid:hover::before{height:100%;}
+
+/* Pulse card */
+.pulse-card{animation:pulseShadow 3s ease-in-out infinite;border-color:rgba(37,99,235,.3)!important;}
+
+/* ── FLOATING DOCK ── */
+#dock{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9999;}
+#dock nav{display:flex;align-items:center;gap:2px;padding:6px 8px;border-radius:18px;background:rgba(2,6,23,.92);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 8px 32px rgba(0,0,0,.5);}
+.dock-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:12px;border:none;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;transition:background .2s,color .2s;font-size:12px;font-weight:500;white-space:nowrap;font-family:'Inter',sans-serif;}
+.dock-btn svg{width:15px;height:15px;flex-shrink:0;}
+.dock-btn:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.06);}
+.dock-btn.active{background:rgba(37,99,235,.2);color:#60a5fa;}
+.dock-label{display:inline;}
+@media(max-width:600px){.dock-label{display:none;}.dock-btn{padding:9px 10px;}}
+
+/* ── HERO ── */
+#hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:0 24px;}
+.hero-bg{position:absolute;inset:0;background:linear-gradient(to bottom,#020617,#020617,#0a1628);}
+.hero-grid{position:absolute;inset:0;opacity:.03;background-image:linear-gradient(rgba(255,255,255,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.1) 1px,transparent 1px);background-size:60px 60px;}
+.hero-inner{position:relative;z-index:1;max-width:1280px;width:100%;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;}
+@media(max-width:900px){.hero-inner{grid-template-columns:1fr;}.hero-sphere{display:none;}}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;margin-bottom:24px;}
+.hero-h1{font-size:clamp(3rem,7vw,5rem);font-weight:900;line-height:1.05;letter-spacing:-.02em;}
+.hero-urdu{font-size:clamp(1.5rem,4vw,2.5rem);}
+.hero-sub{font-size:1.1rem;color:var(--t2);max-width:420px;line-height:1.7;}
+.hero-btns{display:flex;flex-wrap:wrap;gap:16px;}
+.btn-primary{padding:14px 32px;border-radius:999px;border:1px solid var(--signal);background:transparent;color:white;font-size:1.05rem;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:10px;}
+.btn-secondary{padding:14px 32px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.6);font-size:1.05rem;font-weight:500;cursor:pointer;transition:border-color .3s,color .3s;}
+.btn-secondary:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.85);}
+.hero-sphere{display:flex;align-items:center;justify-content:center;}
+#sphereCanvas{width:360px;height:360px;max-width:100%;}
+.sphere-wrap{position:relative;width:360px;height:360px;}
+.sphere-ring1{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(37,99,235,.15);}
+.sphere-ring2{position:absolute;inset:-24px;border-radius:50%;border:1px solid rgba(34,211,238,.05);}
+
+/* ── SECTIONS ── */
+section{padding:128px 24px;}
+.section-inner{max-width:1280px;margin:0 auto;}
+.section-label{font-size:.75rem;font-family:'JetBrains Mono',monospace;color:var(--freq);letter-spacing:.15em;text-transform:uppercase;}
+.section-h2{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-top:12px;letter-spacing:-.02em;}
+.section-sub{color:var(--t2);margin-top:12px;font-size:1.1rem;max-width:520px;line-height:1.7;}
+
+/* ── SERVICES ── */
+.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px;}
+@media(max-width:900px){.services-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.services-grid{grid-template-columns:1fr;}}
+.service-card{border-radius:20px;padding:32px;position:relative;overflow:hidden;cursor:default;transition:border-color .4s;}
+.service-card:hover{border-color:rgba(37,99,235,.35)!important;}
+.service-num{position:absolute;top:20px;right:20px;font-size:3rem;font-family:'JetBrains Mono',monospace;font-weight:800;color:rgba(255,255,255,.04);}
+.service-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+.service-icon svg{width:24px;height:24px;color:white;}
+.service-title{font-size:1.15rem;font-weight:600;color:var(--t1);margin-bottom:4px;}
+.service-urdu{color:var(--freq);margin-bottom:12px;}
+.service-desc{color:rgba(255,255,255,.45);line-height:1.65;font-size:.93rem;}
+
+/* ── HOW IT WORKS ── */
+.timeline{position:relative;max-width:680px;margin:64px auto 0;}
+.timeline-line{position:absolute;left:16px;top:0;bottom:0;width:2px;}
+.timeline-track{width:100%;height:100%;border-radius:2px;background:linear-gradient(to bottom,var(--signal),var(--freq),var(--signal));opacity:.25;}
+.timeline-glow{position:absolute;top:0;left:0;width:100%;border-radius:2px;background:linear-gradient(to bottom,var(--signal),var(--freq));box-shadow:0 0 20px rgba(37,99,235,.5),0 0 40px rgba(34,211,238,.3);animation:fiberGrow 2s .5s ease both;}
+.step{position:relative;padding-left:56px;margin-bottom:64px;}
+.step:last-child{margin-bottom:0;}
+.step-node{position:absolute;left:8px;top:8px;width:20px;height:20px;border-radius:50%;background:#020617;border:2px solid var(--signal);display:flex;align-items:center;justify-content:center;}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--freq);}
+.step-card{border-radius:20px;padding:32px;}
+.step-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.step-ico{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--signal),var(--freq));display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-ico svg{width:24px;height:24px;color:white;}
+.step-num{font-size:3rem;font-family:'JetBrains Mono',monospace;font-weight:800;color:rgba(255,255,255,.06);}
+.step-title{font-size:1.5rem;font-weight:700;color:var(--t1);}
+.step-urdu{color:var(--freq);margin-bottom:8px;}
+.step-desc{color:rgba(255,255,255,.45);line-height:1.7;font-size:.95rem;}
+
+/* ── TESTIMONIALS ── */
+.testi-wrap{max-width:860px;margin:48px auto 0;}
+.testi-card{border-radius:28px;padding:48px;position:relative;}
+.quote-icon{width:40px;height:40px;color:var(--signal);opacity:.3;margin-bottom:24px;}
+.testi-text{font-size:1.25rem;color:rgba(255,255,255,.8);line-height:1.75;font-weight:300;margin-bottom:32px;}
+.testi-footer{display:flex;align-items:center;justify-content:space-between;}
+.testi-name{font-size:1.05rem;font-weight:600;color:var(--t1);}
+.testi-role{color:rgba(255,255,255,.4);font-size:.9rem;}
+.testi-dots-row{display:flex;gap:8px;align-items:center;}
+.testi-dot{width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,.25);border:none;cursor:pointer;transition:all .35s;padding:0;}
+.testi-dot.active{width:28px;background:var(--signal);}
+.testi-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:24px;}
+.testi-btn{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;}
+.testi-btn:hover{border-color:var(--signal);background:rgba(37,99,235,.12);}
+.testi-btn svg{width:20px;height:20px;}
+
+/* ── PRICING ── */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:end;margin-top:64px;}
+@media(max-width:800px){.pricing-grid{grid-template-columns:1fr;}}
+.price-card{border-radius:20px;padding:32px;position:relative;overflow:hidden;transition:border-color .4s;}
+.price-card.featured{margin-top:-32px;}
+.price-badge{position:absolute;top:-16px;left:50%;transform:translateX(-50%);padding:5px 16px;border-radius:999px;background:linear-gradient(90deg,var(--signal),var(--freq));font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:white;white-space:nowrap;}
+.price-featured-bg{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(37,99,235,.08),transparent);pointer-events:none;}
+.price-name{font-size:1.15rem;font-weight:600;color:var(--t1);}
+.price-urdu{color:var(--freq);margin-top:4px;}
+.price-desc{color:rgba(255,255,255,.4);font-size:.85rem;margin-top:8px;margin-bottom:24px;}
+.price-amount{font-size:3rem;font-weight:800;color:rgba(255,255,255,.95);}
+.price-period{color:rgba(255,255,255,.4);font-size:1.1rem;}
+.price-features{list-style:none;margin:24px 0;display:flex;flex-direction:column;gap:10px;}
+.price-features li{display:flex;align-items:flex-start;gap:10px;font-size:.875rem;color:rgba(255,255,255,.6);}
+.price-features li svg{width:16px;height:16px;color:var(--freq);flex-shrink:0;margin-top:2px;}
+.price-cta{width:100%;padding:14px;border-radius:999px;font-size:.95rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .3s;}
+.price-cta.featured-cta{background:linear-gradient(90deg,var(--signal),var(--freq));color:white;border:none;}
+.price-cta.featured-cta:hover{box-shadow:0 8px 32px rgba(37,99,235,.35);}
+.price-cta.plain-cta{background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);}
+.price-cta.plain-cta:hover{border-color:var(--signal);color:white;}
+.price-cta svg{width:16px;height:16px;}
+
+/* ── CONTACT ── */
+#contact{padding:128px 24px;}
+.contact-grid{display:grid;grid-template-columns:2fr 3fr;gap:48px;max-width:1100px;margin:64px auto 0;align-items:start;}
+@media(max-width:800px){.contact-grid{grid-template-columns:1fr;}}
+.contact-info h3{font-size:1.4rem;font-weight:600;color:var(--t1);margin-bottom:12px;}
+.contact-info p{color:rgba(255,255,255,.45);line-height:1.7;}
+.contact-items{margin-top:32px;display:flex;flex-direction:column;gap:20px;}
+.contact-item{display:flex;align-items:center;gap:14px;}
+.contact-item-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.contact-item-icon svg{width:20px;height:20px;color:var(--signal);}
+.contact-item-label{font-size:.7rem;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);}
+.contact-item-val{color:rgba(255,255,255,.8);font-size:.95rem;}
+.contact-form{border-radius:20px;padding:36px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:500px){.form-row{grid-template-columns:1fr;}}
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:20px;}
+.form-group:last-of-type{margin-bottom:24px;}
+.form-label{font-size:.68rem;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);}
+.form-input,.form-select,.form-textarea{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:white;font-family:'Inter',sans-serif;font-size:.9rem;outline:none;transition:border-color .25s;width:100%;}
+.form-input,.form-select{padding:0 14px;height:46px;}
+.form-textarea{padding:12px 14px;resize:none;min-height:110px;}
+.form-input::placeholder,.form-textarea::placeholder{color:rgba(255,255,255,.2);}
+.form-select{appearance:none;-webkit-appearance:none;cursor:pointer;}
+.form-select option{background:#0a1628;color:white;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--signal);}
+.form-submit{width:100%;padding:15px;border-radius:999px;background:linear-gradient(90deg,var(--signal),var(--freq));color:white;border:none;font-size:1rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:box-shadow .3s;}
+.form-submit:hover{box-shadow:0 8px 32px rgba(37,99,235,.35);}
+.form-submit:disabled{opacity:.6;cursor:default;}
+.form-submit svg{width:18px;height:18px;}
+.success-box{border-radius:20px;padding:64px;text-align:center;}
+.success-box svg{width:60px;height:60px;color:var(--freq);margin:0 auto 20px;}
+.success-box h3{font-size:1.5rem;font-weight:600;color:var(--t1);margin-bottom:8px;}
+.success-box p{color:rgba(255,255,255,.5);}
+
+/* ── FOOTER ── */
+footer{position:relative;padding:96px 24px 48px;overflow:hidden;}
+.footer-bg-text{position:absolute;bottom:0;left:50%;transform:translateX(-50%) translateY(45%);font-size:20vw;font-weight:900;letter-spacing:-.05em;color:rgba(255,255,255,.015);line-height:1;pointer-events:none;white-space:nowrap;}
+.footer-inner{max-width:1280px;margin:0 auto;position:relative;z-index:1;}
+.footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:32px;margin-bottom:56px;}
+@media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr 1fr;}}
+@media(max-width:560px){.footer-grid{grid-template-columns:1fr 1fr;}}
+.footer-brand-logo{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.footer-k{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--signal),var(--freq));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:white;}
+.footer-brand-name{font-size:1.2rem;font-weight:700;color:var(--t1);}
+.footer-brand-name span{color:var(--signal);}
+.footer-brand-desc{font-size:.85rem;color:var(--t3);line-height:1.6;margin-bottom:10px;}
+.footer-col-title{font-size:.68rem;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.5);margin-bottom:16px;}
+.footer-links{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.footer-links a{font-size:.875rem;color:var(--t3);text-decoration:none;transition:color .25s;}
+.footer-links a:hover{color:var(--freq);}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+.footer-copy{font-size:.75rem;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.25);}
+.footer-socials{display:flex;gap:24px;}
+.footer-socials a{font-size:.7rem;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);text-decoration:none;transition:color .25s;}
+.footer-socials a:hover{color:var(--freq);}
+</style>
+</head>
+<body>
+
+<!-- FLOATING DOCK -->
+<div id="dock">
+  <nav id="dockNav">
+    <button class="dock-btn active" data-target="hero" onclick="navTo('hero')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="dock-label">Home</span>
+    </button>
+    <button class="dock-btn" data-target="services" onclick="navTo('services')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="6" height="6" rx="1"/><rect x="9" y="3" width="6" height="6" rx="1"/><rect x="16" y="3" width="6" height="6" rx="1"/><rect x="2" y="10" width="6" height="6" rx="1"/><rect x="9" y="10" width="6" height="6" rx="1"/><rect x="16" y="10" width="6" height="6" rx="1"/><rect x="2" y="17" width="6" height="6" rx="1"/><rect x="9" y="17" width="6" height="6" rx="1"/><rect x="16" y="17" width="6" height="6" rx="1"/></svg>
+      <span class="dock-label">Services</span>
+    </button>
+    <button class="dock-btn" data-target="how-it-works" onclick="navTo('how-it-works')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span class="dock-label">Process</span>
+    </button>
+    <button class="dock-btn" data-target="testimonials" onclick="navTo('testimonials')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span class="dock-label">Reviews</span>
+    </button>
+    <button class="dock-btn" data-target="pricing" onclick="navTo('pricing')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      <span class="dock-label">Pricing</span>
+    </button>
+    <button class="dock-btn" data-target="contact" onclick="navTo('contact')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <span class="dock-label">Contact</span>
+    </button>
+  </nav>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-badge glass">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--freq);display:inline-block;" class="animate-pulse"></span>
+        <span class="mono" style="font-size:.75rem;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;">AI Voice Technology</span>
+      </div>
+      <h1 class="hero-h1">
+        <span style="color:rgba(255,255,255,.9)">Speech</span><br>
+        <span class="grad">evolved.</span>
+      </h1>
+      <p class="urdu hero-urdu grad" lang="ur" style="font-size:clamp(1.4rem,3.5vw,2.2rem);margin:12px 0;">کلام کی نئی معراج</p>
+      <p class="hero-sub">AI-powered phone systems that answer, understand, and engage your customers in English and Urdu — 24/7, without missing a beat.</p>
+      <div class="hero-btns">
+        <button class="btn-primary liquid" onclick="navTo('contact')">
+          Get Started
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <button class="btn-secondary" onclick="navTo('how-it-works')">See How It Works</button>
+      </div>
+    </div>
+    <div class="hero-sphere">
+      <div class="sphere-wrap">
+        <canvas id="sphereCanvas"></canvas>
+        <div class="sphere-ring1"></div>
+        <div class="sphere-ring2"></div>
+      </div>
+    </div>
+  </div>
+  <div class="osc" style="position:absolute;bottom:0;left:0;right:0;"></div>
+</section>
+
+<div class="osc"></div>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label">Our Services</div>
+      <h2 class="section-h2">Frequency <span class="grad">Packages</span></h2>
+      <p class="section-sub">Each service engineered to transform how your business communicates.</p>
+    </div>
+    <div class="services-grid">
+      <div class="service-card glass reveal d1">
+        <span class="service-num">01</span>
+        <div class="service-icon" style="background:linear-gradient(135deg,#2563EB,#1d4ed8)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.49 12a19.79 19.79 0 01-3.07-8.67A2 2 0 013.4 1.17h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.72a16 16 0 006.37 6.37l1.08-.77a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+        <div class="service-title">AI Call Answering</div>
+        <div class="urdu service-urdu" lang="ur">اے آئی کال جواب</div>
+        <p class="service-desc">Never miss a call again. Our AI answers instantly in English or Urdu, handling inquiries with natural conversation flow.</p>
+      </div>
+      <div class="service-card glass reveal d2">
+        <span class="service-num">02</span>
+        <div class="service-icon" style="background:linear-gradient(135deg,#22D3EE,#0891b2)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div>
+        <div class="service-title">Bilingual IVR</div>
+        <div class="urdu service-urdu" lang="ur">دو لسانی آئی وی آر</div>
+        <p class="service-desc">Intelligent voice routing that understands context in both languages, directing callers to the right department effortlessly.</p>
+      </div>
+      <div class="service-card glass reveal d3">
+        <span class="service-num">03</span>
+        <div class="service-icon" style="background:linear-gradient(135deg,#2563EB,#22D3EE)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="service-title">Smart Scheduling</div>
+        <div class="urdu service-urdu" lang="ur">ذہین شیڈولنگ</div>
+        <p class="service-desc">AI books appointments, sends confirmations, and manages your calendar — all through natural phone conversations.</p>
+      </div>
+      <div class="service-card glass reveal d1">
+        <span class="service-num">04</span>
+        <div class="service-icon" style="background:linear-gradient(135deg,#1d4ed8,#2563EB)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+        <div class="service-title">Sentiment Analysis</div>
+        <div class="urdu service-urdu" lang="ur">جذبات کا تجزیہ</div>
+        <p class="service-desc">Real-time emotion detection in both languages ensures every caller feels heard, escalating to humans when needed.</p>
+      </div>
+      <div class="service-card glass reveal d2">
+        <span class="service-num">05</span>
+        <div class="service-icon" style="background:linear-gradient(135deg,#0891b2,#22D3EE)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+        <div class="service-title">Call Analytics</div>
+        <div class="urdu service-urdu" lang="ur">کال تجزیات</div>
+        <p class="service-desc">Deep insights into call patterns, customer sentiment, and resolution rates with comprehensive dashboards.</p>
+      </div>
+      <div class="service-card glass reveal d3">
+        <span class="service-num">06</span>
+        <div class="service-icon" style="background:linear-gradient(135deg,#2563EB,#1e40af)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="service-title">Enterprise Security</div>
+        <div class="urdu service-urdu" lang="ur">انٹرپرائز سیکیورٹی</div>
+        <p class="service-desc">Bank-grade encryption, SOC2 compliance, and data residency options for peace of mind.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="osc"></div>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label">The Signal Path</div>
+      <h2 class="section-h2">How It <span class="grad">Works</span></h2>
+    </div>
+    <div class="timeline">
+      <div class="timeline-line"><div class="timeline-track"></div><div class="timeline-glow"></div></div>
+      <div class="step reveal d2">
+        <div class="step-node"><div class="step-dot"></div></div>
+        <div class="step-card glass">
+          <div class="step-header">
+            <div class="step-ico"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg></div>
+            <span class="step-num">01</span>
+          </div>
+          <div class="step-title">Capture</div>
+          <div class="urdu step-urdu" lang="ur">سماعت</div>
+          <p class="step-desc">Our AI listens to every incoming call with human-grade comprehension, understanding both English and Urdu nuances, accents, and context in real-time.</p>
+        </div>
+      </div>
+      <div class="step reveal d3">
+        <div class="step-node"><div class="step-dot"></div></div>
+        <div class="step-card glass">
+          <div class="step-header">
+            <div class="step-ico"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg></div>
+            <span class="step-num">02</span>
+          </div>
+          <div class="step-title">Synthesize</div>
+          <div class="urdu step-urdu" lang="ur">تجزیہ</div>
+          <p class="step-desc">The voice AI processes intent, sentiment, and urgency — synthesizing the optimal response in the caller's preferred language within milliseconds.</p>
+        </div>
+      </div>
+      <div class="step reveal d4">
+        <div class="step-node"><div class="step-dot"></div></div>
+        <div class="step-card glass">
+          <div class="step-header">
+            <div class="step-ico"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+            <span class="step-num">03</span>
+          </div>
+          <div class="step-title">Connect</div>
+          <div class="urdu step-urdu" lang="ur">رابطہ</div>
+          <p class="step-desc">Deliver the business outcome: book appointments, answer questions, route calls, or escalate to humans — seamlessly closing the loop.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="osc"></div>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label">Client Voices</div>
+      <h2 class="section-h2">Trusted by <span class="grad">Leaders</span></h2>
+    </div>
+    <div class="testi-wrap reveal d2">
+      <div class="testi-card glass" id="testiCard">
+        <svg class="quote-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1zm12 0c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>
+        <p class="testi-text" id="testiText">"Kalaam.ai transformed our patient scheduling. We went from missing 40% of after-hours calls to capturing every single one. The Urdu support was the game-changer for our patient demographic."</p>
+        <div class="testi-footer">
+          <div><div class="testi-name" id="testiName">Sarah Ahmed</div><div class="testi-role" id="testiRole">CEO, MedCare Clinics</div></div>
+          <div class="testi-dots-row" id="testiDots">
+            <button class="testi-dot active" onclick="goTesti(0)"></button>
+            <button class="testi-dot" onclick="goTesti(1)"></button>
+            <button class="testi-dot" onclick="goTesti(2)"></button>
+            <button class="testi-dot" onclick="goTesti(3)"></button>
+          </div>
+        </div>
+      </div>
+      <div class="testi-nav">
+        <button class="testi-btn" onclick="prevTesti()"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="testi-btn" onclick="nextTesti()"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="osc"></div>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label">Amplitude Tiers</div>
+      <h2 class="section-h2">Choose Your <span class="grad">Frequency</span></h2>
+      <p class="section-sub" style="margin:12px auto 0;text-align:center;max-width:480px;">Scale your voice AI as your business grows. No hidden fees, no surprises.</p>
+    </div>
+    <div class="pricing-grid">
+      <!-- Starter -->
+      <div class="price-card glass reveal d1">
+        <div class="price-name">Starter</div>
+        <div class="urdu price-urdu" lang="ur" style="color:var(--freq);">ابتدائی</div>
+        <div class="price-desc">Perfect for small businesses getting started with AI voice.</div>
+        <div><span class="price-amount">$299</span><span class="price-period">/mo</span></div>
+        <ul class="price-features">
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Up to 500 calls/month</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>English &amp; Urdu support</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Basic call routing</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Email notifications</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Business hours coverage</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Standard analytics</li>
+        </ul>
+        <button class="price-cta plain-cta" onclick="navTo('contact')">Get Started <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+      </div>
+      <!-- Professional -->
+      <div class="price-card glass pulse-card featured reveal d2" style="position:relative;">
+        <div class="price-badge">Most Popular</div>
+        <div class="price-featured-bg"></div>
+        <div style="position:relative;">
+          <div class="price-name">Professional</div>
+          <div class="urdu price-urdu" lang="ur" style="color:var(--freq);">پروفیشنل</div>
+          <div class="price-desc">For growing businesses that need comprehensive voice AI.</div>
+          <div><span class="price-amount">$799</span><span class="price-period">/mo</span></div>
+          <ul class="price-features">
+            <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Up to 2,500 calls/month</li>
+            <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>English &amp; Urdu support</li>
+            <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Smart call routing &amp; IVR</li>
+            <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Appointment scheduling</li>
+            <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Sentiment analysis</li>
+            <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>24/7 coverage</li>
+            <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Advanced analytics dashboard</li>
+            <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Priority support</li>
+          </ul>
+          <button class="price-cta featured-cta" onclick="navTo('contact')">Get Started <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+        </div>
+      </div>
+      <!-- Enterprise -->
+      <div class="price-card glass reveal d3">
+        <div class="price-name">Enterprise</div>
+        <div class="urdu price-urdu" lang="ur" style="color:var(--freq);">انٹرپرائز</div>
+        <div class="price-desc">Unlimited scale with dedicated infrastructure and support.</div>
+        <div><span class="price-amount">Custom</span></div>
+        <ul class="price-features">
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Unlimited calls</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Custom language models</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>White-label solution</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Dedicated account manager</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Custom integrations (CRM, ERP)</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>On-premise deployment option</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>SLA guarantee (99.99%)</li>
+          <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Compliance &amp; audit support</li>
+        </ul>
+        <button class="price-cta plain-cta" onclick="navTo('contact')">Contact Sales <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="osc" style="margin-bottom:0;position:relative;top:-128px;"></div>
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label">Get In Touch</div>
+      <h2 class="section-h2">Start Your <span class="grad">Signal</span></h2>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-info reveal from-left d2">
+        <h3>Let's amplify your business</h3>
+        <p>Ready to transform your customer communications? Our team will design a custom AI voice solution tailored to your needs.</p>
+        <div class="contact-items">
+          <div class="contact-item">
+            <div class="contact-item-icon glass"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+            <div><div class="contact-item-label">Email</div><div class="contact-item-val"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="eb838e878784ab808a878a8a86c58a82">[email&#160;protected]</a></div></div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-item-icon glass"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.49 12a19.79 19.79 0 01-3.07-8.67A2 2 0 013.4 1.17h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.72a16 16 0 006.37 6.37l1.08-.77a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+            <div><div class="contact-item-label">Phone</div><div class="contact-item-val">+92 300 123 4567</div></div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-item-icon glass"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+            <div><div class="contact-item-label">Location</div><div class="contact-item-val">Lahore &amp; Dubai</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal from-right d3" id="contactFormWrap">
+        <form class="contact-form glass" id="contactForm" onsubmit="handleSubmit(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input class="form-input" type="text" required placeholder="Your name"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input class="form-input" type="email" required placeholder="you@company.com"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Company</label>
+              <input class="form-input" type="text" placeholder="Your company"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Interested In</label>
+              <select class="form-select">
+                <option value="" disabled selected>Select a package</option>
+                <option>Starter — $299/mo</option>
+                <option>Professional — $799/mo</option>
+                <option>Enterprise — Custom</option>
+                <option>Just a Demo</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message</label>
+            <textarea class="form-textarea" placeholder="Tell us about your requirements..."></textarea>
+          </div>
+          <button class="form-submit" type="submit" id="submitBtn">
+            <span id="submitLabel">Send Message</span>
+            <svg id="submitIcon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="osc" style="position:absolute;top:0;left:0;right:0;"></div>
+  <div class="footer-bg-text">KALAAM</div>
+  <div class="footer-inner">
+    <div class="footer-grid" style="grid-template-columns:1.6fr 1fr 1fr 1fr;">
+      <div>
+        <div class="footer-brand-logo"><div class="footer-k">K</div><div class="footer-brand-name">Kalaam<span>.ai</span></div></div>
+        <p class="footer-brand-desc">AI-powered voice systems for businesses. Speaking your language.</p>
+        <p class="urdu" lang="ur" style="color:rgba(255,255,255,.25);font-size:.9rem;">آپ کی زبان میں بات</p>
+      </div>
+      <div>
+        <div class="footer-col-title">Products</div>
+        <ul class="footer-links">
+          <li><a href="ai-call-answering.html">AI Call Answering</a></li>
+          <li><a href="bilingual-ivr.html">Bilingual IVR</a></li>
+          <li><a href="smart-scheduling.html">Smart Scheduling</a></li>
+          <li><a href="analytics.html">Analytics</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Company</div>
+        <ul class="footer-links">
+          <li><a href="about.html">About Us</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Legal</div>
+        <ul class="footer-links">
+          <li><a href="privacy-policy.html">Privacy Policy</a></li>
+          <li><a href="terms-of-service.html">Terms of Service</a></li>
+          <li><a href="cookie-policy.html">Cookie Policy</a></li>
+          <li><a href="gdpr.html">GDPR</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 Kalaam.ai — All rights reserved.</div>
+      <div class="footer-socials"><a href="#">Twitter</a><a href="#">LinkedIn</a><a href="#">GitHub</a></div>
+    </div>
+  </div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+/* ── SMOOTH SCROLL (works on file:// and http://) ── */
+function navTo(id){
+  var el=document.getElementById(id);
+  if(!el)return;
+  var top=el.getBoundingClientRect().top+window.pageYOffset-0;
+  window.scrollTo({top:top,behavior:'smooth'});
+}
+
+/* ── PARTICLE SPHERE ── */
+(function(){
+  var canvas=document.getElementById('sphereCanvas');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  if(!ctx)return;
+  canvas.width=360;canvas.height=360;
+  var mouse={x:0,y:0};
+  var pts=[];
+  for(var i=0;i<700;i++){
+    var th=Math.random()*Math.PI*2;
+    var ph=Math.acos(2*Math.random()-1);
+    var r=120+Math.random()*20;
+    pts.push({th:th,ph:ph,r:r,br:r,sp:0.002+Math.random()*0.003,
+      sz:0.8+Math.random()*1.3,c:Math.random()>0.5?'#2563EB':'#22D3EE',
+      op:0.3+Math.random()*0.7});
+  }
+  canvas.addEventListener('mousemove',function(e){
+    var rc=canvas.getBoundingClientRect();
+    mouse.x=(e.clientX-rc.left)/rc.width-0.5;
+    mouse.y=(e.clientY-rc.top)/rc.height-0.5;
+  });
+  var t=0;
+  function draw(){
+    ctx.clearRect(0,0,360,360);
+    t+=0.005;
+    var br=Math.sin(t*2)*8;
+    var cx=180,cy=180;
+    for(var i=0;i<pts.length;i++){
+      var p=pts[i];
+      p.th+=p.sp;
+      p.r=p.br+br+mouse.x*18;
+      var x=cx+p.r*Math.sin(p.ph)*Math.cos(p.th);
+      var y=cy+p.r*Math.cos(p.ph)+mouse.y*12;
+      var z=p.r*Math.sin(p.ph)*Math.sin(p.th);
+      var sc=(z+150)/300;
+      ctx.beginPath();ctx.arc(x,y,p.sz*sc,0,Math.PI*2);
+      ctx.fillStyle=p.c;ctx.globalAlpha=p.op*sc;ctx.fill();
+    }
+    var g=ctx.createRadialGradient(cx,cy,0,cx,cy,140);
+    g.addColorStop(0,'rgba(37,99,235,0.14)');
+    g.addColorStop(0.5,'rgba(34,211,238,0.04)');
+    g.addColorStop(1,'transparent');
+    ctx.globalAlpha=0.8+Math.sin(t*2)*0.2;
+    ctx.fillStyle=g;ctx.fillRect(0,0,360,360);
+    ctx.globalAlpha=1;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── SCROLL REVEAL ── */
+document.body.classList.add('js-ready');
+var reveals=document.querySelectorAll('.reveal');
+function showAll(){for(var i=0;i<reveals.length;i++)reveals[i].classList.add('visible');}
+if('IntersectionObserver' in window){
+  var obs=new IntersectionObserver(function(entries){
+    for(var i=0;i<entries.length;i++){
+      if(entries[i].isIntersecting)entries[i].target.classList.add('visible');
+    }
+  },{threshold:0.05,rootMargin:'0px 0px -20px 0px'});
+  for(var i=0;i<reveals.length;i++)obs.observe(reveals[i]);
+  setTimeout(showAll,1500);
+}else{showAll();}
+
+/* ── FLOATING DOCK ACTIVE STATE ── */
+var dockBtns=document.querySelectorAll('.dock-btn');
+var sectionIds=['hero','services','how-it-works','testimonials','pricing','contact'];
+window.addEventListener('scroll',function(){
+  var best=sectionIds[0];var bestDist=99999;
+  for(var i=0;i<sectionIds.length;i++){
+    var el=document.getElementById(sectionIds[i]);
+    if(!el)continue;
+    var d=Math.abs(el.getBoundingClientRect().top-180);
+    if(d<bestDist){bestDist=d;best=sectionIds[i];}
+  }
+  for(var i=0;i<dockBtns.length;i++){
+    dockBtns[i].classList.toggle('active',dockBtns[i].dataset.target===best);
+  }
+},{passive:true});
+
+/* ── TESTIMONIALS ── */
+var testimonials=[
+  {name:'Sarah Ahmed',role:'CEO, MedCare Clinics',text:'Kalaam.ai transformed our patient scheduling. We went from missing 40% of after-hours calls to capturing every single one. The Urdu support was the game-changer for our patient demographic.'},
+  {name:'Hassan Malik',role:'Director, Karachi Logistics',text:'The bilingual capability is seamless. Our drivers speak Urdu, our clients speak English — Kalaam handles both without any hiccups. Response time dropped from minutes to seconds.'},
+  {name:'Amina Khan',role:'Founder, Bloom Real Estate',text:"We've saved over 200 hours per month on call handling. The AI doesn't just answer — it qualifies leads, books viewings, and follows up. It's like having an entire call center team."},
+  {name:'Rizwan Qureshi',role:'CTO, FinServe Pakistan',text:"The sentiment analysis caught a critical customer issue that would have escalated. Kalaam's ability to detect frustration and route appropriately has been invaluable for our support team."},
+];
+var cur=0;
+function goTesti(n){
+  cur=n;
+  var t=testimonials[cur];
+  document.getElementById('testiText').textContent='"'+t.text+'"';
+  document.getElementById('testiName').textContent=t.name;
+  document.getElementById('testiRole').textContent=t.role;
+  var dots=document.querySelectorAll('.testi-dot');
+  for(var i=0;i<dots.length;i++)dots[i].classList.toggle('active',i===cur);
+}
+function prevTesti(){goTesti((cur-1+testimonials.length)%testimonials.length);}
+function nextTesti(){goTesti((cur+1)%testimonials.length);}
+
+/* ── CONTACT FORM ── */
+function handleSubmit(e){
+  e.preventDefault();
+  var btn=document.getElementById('submitBtn');
+  var lbl=document.getElementById('submitLabel');
+  btn.disabled=true;
+  lbl.textContent='Sending...';
+  setTimeout(function(){
+    document.getElementById('contactFormWrap').innerHTML=
+      '<div class="success-box glass">'+
+      '<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:60px;height:60px;color:#22D3EE;margin:0 auto 20px;display:block"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'+
+      '<h3 style="font-size:1.5rem;font-weight:600;color:rgba(255,255,255,.9);margin-bottom:8px;">Signal Received</h3>'+
+      '<p style="color:rgba(255,255,255,.5);">We\'ll get back to you within 24 hours. Thank you for choosing Kalaam.ai.</p>'+
+      '</div>';
+  },1500);
+}
+</script>
+</body>
+</html>
